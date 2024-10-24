@@ -763,6 +763,21 @@ static int send_buf(struct bt_conn *conn, struct net_buf *buf,
 	}
 
 	if (!err) {
+		/* move the next TX context from the `pending` list to
+			* the `complete` list.
+			*/
+		sys_snode_t *node;
+		node = sys_slist_get(&conn->tx_pending);
+
+		if (!node) {
+			LOG_ERR("packets count mismatch");
+			__ASSERT_NO_MSG(0);
+			return 0;
+		}
+		sys_slist_append(&conn->tx_complete, &tx->node);
+
+		/* TX context free + callback happens in there */
+		bt_conn_tx_notify(conn, false);
 		return 0;
 	}
 

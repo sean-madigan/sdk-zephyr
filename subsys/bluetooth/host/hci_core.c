@@ -583,29 +583,11 @@ static void hci_num_completed_packets(struct net_buf *buf)
 		}
 
 		while (count--) {
-			sys_snode_t *node;
-
 			k_sem_give(bt_conn_get_pkts(conn));
-
-			/* move the next TX context from the `pending` list to
-			 * the `complete` list.
-			 */
-			node = sys_slist_get(&conn->tx_pending);
-
-			if (!node) {
-				LOG_ERR("packets count mismatch");
-				__ASSERT_NO_MSG(0);
-				break;
-			}
-
-			sys_slist_append(&conn->tx_complete, node);
 
 			/* align the `pending` value */
 			__ASSERT_NO_MSG(atomic_get(&conn->in_ll));
 			atomic_dec(&conn->in_ll);
-
-			/* TX context free + callback happens in there */
-			bt_conn_tx_notify(conn, false);
 		}
 
 		bt_conn_unref(conn);
